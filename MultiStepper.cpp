@@ -46,8 +46,8 @@ http://www.arduino.cc/en/Tutorial/Stepper
  */
 
 
+#include "MultiStepper.h"
 #include "Arduino.h"
-#include "Stepper.h"
 
 
 /*
@@ -58,9 +58,9 @@ MultiStepper::MultiStepper(int number_of_motors)
   this->step_number = new int[number_of_motors];      // which step the motor is on
   this->speed = new int[number_of_motors];        // the motor speed, in revolutions per minute
   this->direction = new int[number_of_motors];      // motor direction
-  this->last_step_time = new int[number_of_motors];    // time stamp in ms of the last step taken
+  this->last_step_time = new long[number_of_motors];    // time stamp in ms of the last step taken
   this->number_of_steps = new int[number_of_motors];    // total number of steps for this motor
-  this->step_delay = new int[number_of_motors];
+  this->step_delay = new unsigned long[number_of_motors];
   
   this->motor_pin_1 = new int[number_of_motors];
   this->motor_pin_2 = new int[number_of_motors];
@@ -75,7 +75,7 @@ MultiStepper::MultiStepper(int number_of_motors)
  * two-wire constructor.
  * Sets which wires should control the motor.
  */
-MultiStepper::addMotor(int number_of_steps, int motor_pin_1, int motor_pin_2)
+void MultiStepper::addMotor(int number_of_steps, int motor_pin_1, int motor_pin_2)
 {
   int i = this->motor_count;
   this->step_number[i] = 0;      // which step the motor is on
@@ -106,7 +106,7 @@ MultiStepper::addMotor(int number_of_steps, int motor_pin_1, int motor_pin_2)
  *   constructor for four-pin version
  *   Sets which wires should control the motor.
  */
-MultiStepper::addMotor(int number_of_steps, int motor_pin_1, int motor_pin_2, int motor_pin_3, int motor_pin_4)
+void MultiStepper::addMotor(int number_of_steps, int motor_pin_1, int motor_pin_2, int motor_pin_3, int motor_pin_4)
 {
   int i = this->motor_count;
   this->step_number[i] = 0;      // which step the motor is on
@@ -139,15 +139,14 @@ MultiStepper::addMotor(int number_of_steps, int motor_pin_1, int motor_pin_2, in
 */
 void MultiStepper::setSpeed(long whatSpeed, int motor)
 {
-  this->step_delay[i] = 60L * 1000L / this->number_of_steps / whatSpeed;
+  this->step_delay[motor] = 60L * 1000L / this->number_of_steps[motor] / whatSpeed;
 }
 
-
-int MultiStepper::stepsLeft(int steps_left[])
+int MultiStepper::stepsLeft(void)
 {
   int max_steps_left = 0;
-  for (int steps: steps_left) {
-    if (steps > max_steps_left) { max_steps_left = steps; }
+  for (int i = 0; i < sizeof(this->steps_left) / sizeof(*this->steps_left); ++i) {
+    if (this->steps_left[i] > max_steps_left) { max_steps_left = this->steps_left[i]; }
   }
   return max_steps_left;
 }
@@ -158,41 +157,40 @@ int MultiStepper::stepsLeft(int steps_left[])
  */
 void MultiStepper::step(int steps_to_move[])
 {  
-  int steps_left = new int[this->motor_count];
-  int i = 0;
+  this->steps_left = new int[this->motor_count];
   int max_steps_left = 0; // Used to determine if we have to keep looping
   
-  for (int steps: steps_to_move) {
-	steps_left[i] = abs(steps); // how many steps to take
+  for (int i = 0; i < sizeof(steps_to_move) / sizeof(*steps_to_move); ++i) {
+    int steps = steps_to_move[i];
+	this->steps_left[i] = abs(steps); // how many steps to take
 	
     // determine direction based on whether steps_to_mode is + or -:
     if (steps > 0) {this->direction[i] = 1;}
     if (steps < 0) {this->direction[i] = 0;}
 	
 	if (steps > max_steps_left) {max_steps_left = steps;}
-	i++;
   }
   
   // decrement the number of max steps, moving one step each time:
-  while(stepsLeft(steps_left) > 0) {
-	for (int motor : steps_to_move) {
-	  if (millis() - this->last_step_time[motor] >= this->step_delay[motor]){
-	    this->last_step_time[motor] = millis();
+  while (stepsLeft() > 0) {
+	for (int i = 0; i < sizeof(steps_to_move) / sizeof(*steps_to_move); ++i) {
+	  if (millis() - this->last_step_time[i] >= this->step_delay[i]) {
+	    this->last_step_time[i] = millis();
 	  
-	    if (this->direction == 1) {
-	      this->step_number[motor]++;
-		  if (this->step_number == this->number_of_steps[motor]) {
-		    this->step_number[motor} = 0;
+	    if (this->direction[i] == 1) {
+	      this->step_number[i]++;
+		  if (this->step_number[i] == this->number_of_steps[i]) {
+		    this->step_number[i] = 0;
 		  }
 	    } else {
-	      if (this->step_number[motor] == 0) {
-		    this->step_number[motor] = this->number_of_steps[motor];
+	      if (this->step_number[i] == 0) {
+		    this->step_number[i] = this->number_of_steps[i];
 		  }
 		  this->step_number--;
 	    }
-        stepMotor(this->step_number[motor] % 4, motor);
-      }
-	}
+        stepMotor(this->step_number[i] % 4, i);
+	  }
+    }
   }
 }
 
