@@ -46,37 +46,41 @@
 #define Stepper_h
 
 // library interface description
-class Stepper {
+class MultiStepper {
   public:
     // constructors:
-    Stepper(int number_of_steps, int motor_pin_1, int motor_pin_2);
-    Stepper(int number_of_steps, int motor_pin_1, int motor_pin_2, int motor_pin_3, int motor_pin_4);
+	Stepper(int number_of_motors);
+    addMotor(int number_of_steps, int motor_pin_1, int motor_pin_2);
+    addMotor(int number_of_steps, int motor_pin_1, int motor_pin_2, int motor_pin_3, int motor_pin_4);
 
     // speed setter method:
-    void setSpeed(long whatSpeed);
+    void setSpeed(long whatSpeed, int motor);
 
+	int steps_left(int steps_left[]);
+	
     // mover method:
-    void step(int number_of_steps);
+    void step(int steps_to_moves[]);
 
     int version(void);
 
   private:
-    void stepMotor(int this_step);
+    void stepMotor(int this_step, int motor);
     
-    int direction;        // Direction of rotation
-    int speed;          // Speed in RPMs
-    unsigned long step_delay;    // delay between steps, in ms, based on speed
-    int number_of_steps;      // total number of steps this motor can take
-    int pin_count;        // whether you're driving the motor with 2 or 4 pins
-    int step_number;        // which step the motor is on
+    int *direction;        // Direction of rotation
+    int *speed;          // Speed in RPMs
+    unsigned long *step_delay;    // delay between steps, in ms, based on speed
+    int *number_of_steps;      // total number of steps this motor can take
+    int *pin_count;        // whether you're driving the motor with 2 or 4 pins
+    int *step_number;        // which step the motor is on
+	int motor_count;
     
     // motor pin numbers:
-    int motor_pin_1;
-    int motor_pin_2;
-    int motor_pin_3;
-    int motor_pin_4;
+    int *motor_pin_1;
+    int *motor_pin_2;
+    int *motor_pin_3;
+    int *motor_pin_4;
     
-    long last_step_time;      // time stamp in ms of when the last step was taken
+    long *last_step_time;      // time stamp in ms of when the last step was taken
 };
 
 #endif
