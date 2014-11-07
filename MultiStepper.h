@@ -5,8 +5,9 @@
   Two-wire modifications   (0.2) by Sebastian Gassner
   Combination version   (0.3) by Tom Igoe and David Mellis
   Bug fix for four-wire   (0.4) by Tom Igoe, bug fix from Noah Shibley
+  Enable support for multiple motors   (0.5) by Daan Middendorp
 
-  Drives a unipolar or bipolar stepper motor using  2 wires or 4 wires
+  Drives multiple unipolar or bipolar stepper motor using  2 wires or 4 wires
 
   When wiring multiple stepper motors to a microcontroller,
   you quickly run out of output pins, with each motor requiring 4 connections. 

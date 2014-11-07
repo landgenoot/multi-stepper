@@ -7,7 +7,7 @@
   Bug fix for four-wire   (0.4) by Tom Igoe, bug fix from Noah Shibley  
   Enable support for multiple motors   (0.5) by Daan Middendorp
 
-  Drives a unipolar or bipolar stepper motor using  2 wires or 4 wires
+  Drives multiple unipolar or bipolar stepper motor using  2 wires or 4 wires
 
   When wiring multiple stepper motors to a microcontroller,
   you quickly run out of output pins, with each motor requiring 4 connections. 
@@ -42,13 +42,10 @@
  
 http://www.arduino.cc/en/Tutorial/Stepper
  
- 
  */
-
 
 #include "MultiStepper.h"
 #include "Arduino.h"
-
 
 /*
  * Creates arrays with length equal to the amount of motors.
@@ -72,7 +69,7 @@ MultiStepper::MultiStepper(int number_of_motors)
 }
 
 /*
- * two-wire constructor.
+ * Two-wire constructor.
  * Sets which wires should control the motor.
  */
 void MultiStepper::addMotor(int number_of_steps, int motor_pin_1, int motor_pin_2)
@@ -103,8 +100,8 @@ void MultiStepper::addMotor(int number_of_steps, int motor_pin_1, int motor_pin_
 }
 
 /*
- *   constructor for four-pin version
- *   Sets which wires should control the motor.
+ * Constructor for four-pin version
+ * Sets which wires should control the motor.
  */
 void MultiStepper::addMotor(int number_of_steps, int motor_pin_1, int motor_pin_2, int motor_pin_3, int motor_pin_4)
 {
@@ -134,14 +131,16 @@ void MultiStepper::addMotor(int number_of_steps, int motor_pin_1, int motor_pin_
 }
 
 /*
-  Sets the speed in revs per minute
-
-*/
+ * Sets the speed in revs per minute
+ */
 void MultiStepper::setSpeed(long whatSpeed, int motor)
 {
   this->step_delay[motor] = 60L * 1000L / this->number_of_steps[motor] / whatSpeed;
 }
 
+/*
+ * Determines if at least one of the motors has to continue spinning.
+ */
 int MultiStepper::stepsLeft(void)
 {
   int max_steps_left = 0;
@@ -152,8 +151,8 @@ int MultiStepper::stepsLeft(void)
 }
 
 /*
-  Moves the motors steps_to_move steps.  If the number is negative, 
-  the motor moves in the reverse direction.
+ * Moves the motors steps_to_move steps.  If the number is negative, 
+ * the motor moves in the reverse direction.
  */
 void MultiStepper::step(int steps_to_move[])
 {  
@@ -173,7 +172,7 @@ void MultiStepper::step(int steps_to_move[])
   
   // decrement the number of max steps, moving one step each time:
   while (stepsLeft() > 0) {
-	for (int i = 0; i < sizeof(steps_to_move) / sizeof(*steps_to_move); ++i) {
+	for (int i = 0; i < this->motor_count; ++i) {
 	  if (millis() - this->last_step_time[i] >= this->step_delay[i]) {
 	    this->last_step_time[i] = millis();
 	  
@@ -186,9 +185,10 @@ void MultiStepper::step(int steps_to_move[])
 	      if (this->step_number[i] == 0) {
 		    this->step_number[i] = this->number_of_steps[i];
 		  }
-		  this->step_number--;
+		  this->step_number[i]--;
 	    }
         stepMotor(this->step_number[i] % 4, i);
+		this->steps_left[i]--;
 	  }
     }
   }
@@ -250,8 +250,8 @@ void MultiStepper::stepMotor(int thisStep, int motor)
 }
 
 /*
-  version() returns the version of the library:
-*/
+ * version() returns the version of the library:
+ */
 int MultiStepper::version(void)
 {
   return 5;
